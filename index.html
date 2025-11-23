@@ -1,0 +1,481 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FinVoice – Voice Banking Assistant</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1f618d 0, #17202a 40%, #0b1722 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #ecf0f1;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 720px;
+            background: rgba(10, 25, 47, 0.96);
+            border-radius: 18px;
+            padding: 24px 24px 28px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .logo-circle {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #00ff99);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #0b1722;
+            font-size: 20px;
+        }
+
+        h1 {
+            font-size: 22px;
+            margin: 0;
+        }
+
+        .subtitle {
+            margin: 0 0 18px;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .row .field {
+            flex: 1 1 200px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            opacity: 0.85;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 11px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(9, 20, 38, 0.9);
+            color: #ecf0f1;
+            font-size: 14px;
+        }
+
+        input::placeholder {
+            color: rgba(236, 240, 241, 0.4);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #00d4ff;
+            box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.3);
+        }
+
+        .command-area {
+            position: relative;
+        }
+
+        .mic-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 999px;
+            border: none;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 212, 255, 0.12);
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+        }
+
+        .mic-btn span {
+            font-size: 18px;
+        }
+
+        .mic-btn:hover {
+            background: rgba(0, 212, 255, 0.22);
+            box-shadow: 0 0 0 1px rgba(0, 212, 255, 0.6);
+        }
+
+        .mic-btn:active {
+            transform: translateY(-50%) scale(0.96);
+        }
+
+        .mic-btn.listening {
+            background: rgba(255, 99, 132, 0.2);
+            box-shadow: 0 0 0 1px rgba(255, 99, 132, 0.8);
+        }
+
+        .mic-btn.listening span {
+            color: #ff6b81;
+        }
+
+        .status-line {
+            font-size: 12px;
+            margin-bottom: 8px;
+            min-height: 16px;
+            opacity: 0.8;
+        }
+
+        .status-line span.dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 6px;
+            background: #27ae60;
+        }
+
+        .status-line.loading span.dot {
+            background: #f1c40f;
+            animation: pulse 1s infinite;
+        }
+
+        .status-line.error span.dot {
+            background: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .btn-primary {
+            padding: 11px 14px;
+            border-radius: 999px;
+            border: none;
+            background: linear-gradient(135deg, #00d4ff, #00ff99);
+            color: #0b1722;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 10px;
+            min-width: 160px;
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.05);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.35);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .btn-primary[disabled] {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .output {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(15, 35, 64, 0.95);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            font-size: 14px;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .output-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .assistant-reply {
+            font-size: 15px;
+            margin-bottom: 8px;
+        }
+
+        .pill {
+            display: inline-block;
+            font-size: 11px;
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(0, 212, 255, 0.14);
+            margin-right: 6px;
+            margin-top: 4px;
+        }
+
+        pre {
+            background: rgba(0,0,0,0.25);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+
+        .footer-hint {
+            margin-top: 10px;
+            font-size: 11px;
+            opacity: 0.65;
+            text-align: right;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 18px 18px 22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <div class="logo-circle">F</div>
+        <div>
+            <h1>FinVoice – AI Voice Banking</h1>
+            <p class="subtitle">Talk. Transact. Trust. | Try: “Check my balance” or “Transfer 500 to Rohan”.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="field">
+            <label for="userId">User ID</label>
+            <input type="text" id="userId" placeholder="e.g., user123">
+        </div>
+        <div class="field">
+            <label for="language">Language</label>
+            <input type="text" id="language" placeholder="en" value="en">
+        </div>
+    </div>
+
+    <div class="field command-area">
+        <label for="userInput">Command</label>
+        <input type="text" id="userInput" placeholder="Type or use the mic to speak your command...">
+        <button class="mic-btn" id="micBtn" type="button" title="Speak your command">
+            <span>🎙️</span>
+        </button>
+    </div>
+
+    <div class="status-line" id="statusLine">
+        <span class="dot"></span><span id="statusText">Ready for your command.</span>
+    </div>
+
+    <button class="btn-primary" id="submitBtn" type="button">
+        <span>Send to FinVoice</span> ➜
+    </button>
+
+    <div id="output" class="output" style="display: none;">
+        <div class="output-title">Assistant Response</div>
+        <div class="assistant-reply" id="assistantReply"></div>
+        <div id="metaInfo"></div>
+        <div id="dataBlock"></div>
+    </div>
+
+    <div class="footer-hint">
+        Mic uses browser speech recognition (Chrome / Edge recommended).
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000/voice-command";
+
+
+    const userInput = document.getElementById("userInput");
+    const userIdInput = document.getElementById("userId");
+    const languageInput = document.getElementById("language");
+    const outputBox = document.getElementById("output");
+    const assistantReplyEl = document.getElementById("assistantReply");
+    const metaInfoEl = document.getElementById("metaInfo");
+    const dataBlockEl = document.getElementById("dataBlock");
+    const statusLine = document.getElementById("statusLine");
+    const statusText = document.getElementById("statusText");
+    const submitBtn = document.getElementById("submitBtn");
+    const micBtn = document.getElementById("micBtn");
+
+    let isListening = false;
+    let recognition = null;
+
+    // Attach events
+    submitBtn.addEventListener("click", sendCommand);
+    userInput.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            sendCommand();
+        }
+    });
+
+    // --- API Call ---
+    async function sendCommand() {
+        const text = userInput.value.trim();
+        const userId = userIdInput.value.trim() || "user123";
+        const language = languageInput.value.trim() || "en";
+
+        if (!text) {
+            alert("Please enter or speak a command.");
+            return;
+        }
+
+        const payload = {
+            text: text,
+            user_id: userId,
+            language: language
+        };
+
+        setStatus("Sending command to FinVoice…", "loading");
+        submitBtn.disabled = true;
+
+        outputBox.style.display = "block";
+        assistantReplyEl.textContent = "Processing...";
+        metaInfoEl.innerHTML = "";
+        dataBlockEl.innerHTML = "";
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            assistantReplyEl.textContent = data.assistant_reply || "(No reply from backend)";
+            metaInfoEl.innerHTML = `
+                <span class="pill">Intent: ${data.intent}</span>
+                <span class="pill">User: ${data.user_id}</span>
+                <span class="pill">Entities: ${JSON.stringify(data.entities || {})}</span>
+            `;
+            dataBlockEl.innerHTML = `
+                <pre>${JSON.stringify(data.data || {}, null, 2)}</pre>
+            `;
+
+            setStatus("Response received from FinVoice.", "ok");
+        } catch (err) {
+            assistantReplyEl.textContent = "";
+            metaInfoEl.innerHTML = "";
+            dataBlockEl.innerHTML = "<pre>Could not connect to backend.\nIs Uvicorn running on 127.0.0.1:8000?</pre>";
+            setStatus("Error connecting to backend.", "error");
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+
+    function setStatus(message, type) {
+        statusText.textContent = message;
+        statusLine.classList.remove("loading", "error");
+        if (type === "loading") {
+            statusLine.classList.add("loading");
+        } else if (type === "error") {
+            statusLine.classList.add("error");
+        }
+    }
+
+    // --- Voice Input (Web Speech API) ---
+    function initSpeechRecognition() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            setStatus("Speech recognition not supported in this browser.", "error");
+            micBtn.disabled = true;
+            micBtn.title = "Speech recognition not supported";
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = "en-IN";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            isListening = true;
+            micBtn.classList.add("listening");
+            setStatus("Listening… Please speak your banking command.", "loading");
+        };
+
+        recognition.onend = () => {
+            isListening = false;
+            micBtn.classList.remove("listening");
+            if (!userInput.value.trim()) {
+                setStatus("Did not catch anything. Try again or type your command.", "error");
+            } else {
+                setStatus("Recognized speech. You can edit the text and press Send.", "ok");
+            }
+        };
+
+        recognition.onerror = (event) => {
+            isListening = false;
+            micBtn.classList.remove("listening");
+            console.error("Speech recognition error:", event.error);
+            setStatus("Speech recognition error. Try again or type manually.", "error");
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            userInput.value = transcript;
+        };
+    }
+
+    micBtn.addEventListener("click", () => {
+        if (!recognition) {
+            initSpeechRecognition();
+        }
+
+        if (!recognition) {
+            // still null (not supported)
+            return;
+        }
+
+        if (isListening) {
+            recognition.stop();
+        } else {
+            userInput.value = "";
+            recognition.start();
+        }
+    });
+
+    // Initialize speech support state on load
+    initSpeechRecognition();
+</script>
+
+</body>
+</html>
